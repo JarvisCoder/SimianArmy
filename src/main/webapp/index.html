@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Le styles -->
+<link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet">
+<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.js"></script>
+<script type="text/javascript" src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+<script src="https://sdk.amazonaws.com/js/aws-sdk-2.2.4.min.js"></script>
+<script type="text/javascript">
+var err;
+
+$(document).ready(function(){
+    getChaos();
+})
+
+// Get ELB Info
+function getElbInfo(){
+     var loadBalName = $('#loadBalancerGrp').val();
+         if(loadBalName.length>0){
+         $.ajax({
+                    url : "api/v1/chaos/Gorilla",
+                    type: 'GET',
+                    crossDomain: true, // enable this
+                    contentType: 'application/json',
+                    data: {
+						"elbName" : loadBalName
+                    },
+                    success: function(data) {
+                    	console.log(data);    
+                    	var returnedData = $.parseJSON(data);
+                        var message =  
+                                       "<p>Availability Zones : " + returnedData.availability_zones +"</p>"
+                        			   +"<p>Instances : " +returnedData.ec2_instances+"</p>";             
+                        $("#ELBInfoMessage").html(message);
+                    },
+                    error: function(xhr, status, error) {
+                            
+                    }
+        }); 
+    }
+}
+
+function submitChaosAZ(){
+    $.ajax({
+                url : "api/v1/chaos/Gorilla",
+                type: 'POST',
+                crossDomain: true, // enable this
+                contentType: 'application/json',
+                data: JSON.stringify( { "elbName": $('#loadBalancerGrp').val()}),
+                success: function(data) {                    
+                    console.log(data);
+                },
+                error: function(xhr, status, error) {
+                        
+                }
+    }); 
+}
+
+function submitChaos(){ 
+        $.ajax({
+                url : "api/v1/chaos/",
+                type: 'POST',
+                crossDomain: true, // enable this
+                contentType: 'application/json',
+                    data: JSON.stringify( { "eventType": $('#eventType').val(),
+                        "groupType":$('#groupType').val(),
+                        "groupName":$('#autoscalingGrp').val() } ),
+                    success: function(data) {
+                    
+                    console.log(data)
+                    getChaos()
+                    alert("Sucessfully Triggered event!")
+                    },
+                    error: function(xhr, status, error) {
+                        
+                    }
+        }); 
+    }
+
+function timeConverter(UNIX_timestamp){
+  var a = new Date(UNIX_timestamp);
+  var time2=a
+  return time2;
+}
+
+function getChaos(){ 
+    $("#result").html("");
+       
+        $.ajax({
+                url : "api/v1/chaos/",
+                type: 'GET',
+                crossDomain: true, // enable this
+                
+                    success: function(data)
+                    {
+                        
+                     var json = $.parseJSON(data);
+                     var html= "<table class='table table-striped'style='width:100%'><tr><th>eventTime</th><th>ASGgroupName</th><th>EventType</th><th>Chaos Type</th><th>region</th></tr>";
+                        $(json).each(function(i,val){
+                            html=html+"<tr>";
+                            html=html+"<td>"+timeConverter(val.eventTime)+"</td>";
+                            html=html+"<td>"+val.groupName+"</td>";
+                            html=html+"<td>"+val.eventType+"</td>";
+                            html=html+"<td>"+val.chaosType+"</td>";
+                            html=html+"<td>"+val.region+"</td>";
+                            html=html+"</tr>";
+                            
+                        });
+                        html=html+"</table>";
+                        $("#result").html(html);
+                    },
+                    error: function(xhr, status, error) {
+                        
+                    }
+                });
+    }
+</script>
+</head>
+
+<body>
+
+<div class="container">
+
+<div id="content">
+    <ul id="tabs" class="nav nav-tabs" data-tabs="tabs">
+        <li class="active"><a href="#havoc1" data-toggle="tab">Instance Chaos</a></li>
+        <li ><a href="#havoc2" data-toggle="tab">Availability Zone Chaos</a></li>
+    </ul>
+    <div id="my-tab-content" class="tab-content">
+        <div class="tab-pane active" id="havoc1">
+            <br />
+            <label>AutoScaling Group : </label>
+            <select id="autoscalingGrp" style="width:20%;" name="autoScalingGroup" class="btn btn-primary dropdown-toggle">
+                    <option name="Test_Chaos_ID" value="nexus-proxy-qa-cicd-core-us-west-2-app-20150810-1223-Instance-DICZFN6FAVX0">ScalingGroup-1</option>
+                    <option name="Test_Chaos_ID" value="nexus-proxy-qa-cicd-core-us-west-2-app-20150810-1223-Instance-DICZFN6FAVX0">ScalingGroup-2<</option>
+                    <option name="Test_Chaos_ID" value="nexus-proxy-qa-cicd-core-us-west-2-app-20150810-1223-Instance-DICZFN6FAVX0">ScalingGroup-3</option>
+            </select>
+            <br /><br />
+            <label>Event Type : </label>
+            <select id="eventType" style="width:20%;" name="eventType" class="btn btn-primary dropdown-toggle">
+                    <option name="CHAOS_TERMINATION" value="CHAOS_TERMINATION">CHAOS TERMINATION</option>
+            </select>
+            <br/><br />
+            <label>Group Type : </label>
+            <select id="groupType" style="width:20%;" name="groupType" class="btn btn-primary dropdown-toggle">
+                    <option name=ASG value="ASG">ASG</option>
+            </select>
+            <br /><br />
+            <label>Chaos Type : </label>
+            <select id="chaosType" style="width:20%;" name="chaosType" class="btn btn-primary dropdown-toggle">
+                    <option name=ShutdownInstanceChaosType value="ShutdownInstanceChaosType">Shutdown Instance</option>
+            </select>
+            <br /><br />
+            <input type="button" class ="btn btn-primary" value="Submit" onclick="submitChaos()"></input>
+        	<br /><br />
+			<h4>Past Events</h4>
+				<hr />
+			<div id="result"></div>
+        </div>
+        <!-- Container Ends-->
+        <div class="tab-pane" id="havoc2">
+            <br />
+            <label>Load Balancer : </label>
+            <select onchange="getElbInfo();" id="loadBalancerGrp" style="width:20%;" name="loadBalancerGrp" class="btn btn-primary dropdown-toggle">
+                    <option name="Test_Chaos_ID" value=""></option>
+                    <option name="Test_Chaos_ID" value="nexus-pro-NexusApp-VDHWKNQ7ISU">nexus-pro-NexusApp-VDHWKNQ7ISU</option>
+                    <option name="Test_Chaos_ID" value="nexus-pro-NexusApp-1OR4REDIT1NL9">nexus-pro-NexusApp-1OR4REDIT1NL9</option>
+                    <option name="Test_Chaos_ID" value="perforce-Perforce-9DOK6JGUHL2C">perforce-Perforce-9DOK6JGUHL2C</option>
+            </select>
+            <div id="ELBInfoMessage" style="border: thin solid black"></div>
+            <br /><br />
+            <input type="button" class ="btn btn-primary" value="Submit" onclick="submitChaosAZ()"></input>
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+    jQuery(document).ready(function ($) {
+        $('#tabs').tab();
+    });
+    
+</script>    
+</div> 
+</body>
+</html>

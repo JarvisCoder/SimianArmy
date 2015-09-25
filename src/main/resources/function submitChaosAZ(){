@@ -1,0 +1,19 @@
+function submitChaosAZ(){
+    $.ajax({
+                url : "api/v1/chaos/Gorilla",
+                type: 'POST',
+                crossDomain: true, // enable this
+                contentType: 'application/json',
+                data: JSON.stringify( { "elbName": $('#loadBalancerGrp').val()}),
+                success: function(data) {   
+                    console.data(data);    
+                    var returnedData = $.parseJSON(data);
+                    var message = "<p>" + returnedData.availability_zones +"</p>"
+                    			   +"<p>" +returnedData.ec2_instances+"</p>";             
+                    $("#ELBInfoMessage").html(message);
+                },
+                error: function(xhr, status, error) {
+                        
+                }
+    }); 
+}

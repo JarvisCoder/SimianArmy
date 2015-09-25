@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Le styles -->
+<link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet">
+<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.js"></script>
+<script type="text/javascript" src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+<script src="https://sdk.amazonaws.com/js/aws-sdk-2.2.4.min.js"></script>
+<script type="text/javascript">
+var err;
+$(document).ready(function(){
+    getChaos();
+})
+function submitChaos(){ 
+
+        $.ajax({
+                url : "api/v1/chaos/",
+                type: 'POST',
+                crossDomain: true, // enable this
+                contentType: 'application/json',
+                    data: JSON.stringify( { "eventType": $('#eventType').val(),
+                        "groupType":$('#groupType').val(),
+                        "groupName":$('#autoscalingGrp').val() } ),
+                    success: function(data) {
+                    
+                    console.log(data)
+                    getChaos()
+                    alert("Sucessfully Triggered event!")
+                    },
+                    error: function(xhr, status, error) {
+                        
+                    }
+                });
+    }
+function timeConverter(UNIX_timestamp){
+  var a = new Date(UNIX_timestamp);
+  /*var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var year = a.getFullYear();
+  var month = months[a.getMonth()];
+  var date = a.getDate();
+  var hour = a.getHours();
+  var min = a.getMinutes();
+  var sec = a.getSeconds();
+  var time = date + ' ' + month + ' ' + year + ' ' + hour + ':' + min + ':' + sec ;*/
+  var time2=a
+  return time2;
+}
+function getChaos(){ 
+    $("#result").html("");
+       
+        $.ajax({
+                url : "api/v1/chaos/",
+                type: 'GET',
+                crossDomain: true, // enable this
+                
+                    success: function(data)
+                    {
+                        
+                     var json = $.parseJSON(data);
+                     var html= "<table class='table table-striped'style='width:100%'><tr><th>eventTime</th><th>ASGgroupName</th><th>EventType</th><th>Chaos Type</th><th>region</th></tr>";
+                        $(json).each(function(i,val){
+                            html=html+"<tr>";
+                            html=html+"<td>"+timeConverter(val.eventTime)+"</td>";
+                            html=html+"<td>"+val.groupName+"</td>";
+                            html=html+"<td>"+val.eventType+"</td>";
+                            html=html+"<td>"+val.chaosType+"</td>";
+                            html=html+"<td>"+val.region+"</td>";
+                            html=html+"</tr>";
+                            /*$.each(val,function(k,v){
+                                $("#result").append(k+" : "+ v)
+                                console.log(k+" : "+ v);    
+                        });*/
+                        });
+                        html=html+"</table>";
+                        $("#result").html(html);
+                    },
+                    error: function(xhr, status, error) {
+                        
+                    }
+                });
+    }
+</script>
+</head>
+
+<body>
+
+<div class="container">
+
+<div id="content">
+    <ul id="tabs" class="nav nav-tabs" data-tabs="tabs">
+        <li class="active"><a href="#havoc" data-toggle="tab">Home</a></li>
+    </ul>
+    <div id="my-tab-content" class="tab-content">
+        <div class="tab-pane active" id="havoc">
+            <br />
+            <label>AutoScaling Group : </label>
+            <select id="autoscalingGrp" style="width:20%;" name="autoScalingGroup" class="btn btn-primary dropdown-toggle">
+                    <option name="Test_Chaos_ID" value="Test_Chaos_ID">Test_Chaos_ID</option>
+                    <option name="Test_Chaos_ID" value="Test_Chaos_ID">Test_Chaos_ID_1</option>
+                    <option name="Test_Chaos_ID" value="Test_Chaos_ID">Test_Chaos_ID_2</option>
+            </select>
+            <br /><br />
+            <label>Event Type : </label>
+            <select id="eventType" style="width:20%;" name="eventType" class="btn btn-primary dropdown-toggle">
+                    <option name="CHAOS_TERMINATION" value="CHAOS_TERMINATION">CHAOS TERMINATION</option>
+            </select>
+            <br/><br />
+            <label>Group Type : </label>
+            <select id="groupType" style="width:20%;" name="groupType" class="btn btn-primary dropdown-toggle">
+                    <option name=ASG value="ASG">ASG</option>
+            </select>
+            <br /><br />
+            <label>Chaos Type : </label>
+            <select id="chaosType" style="width:20%;" name="chaosType" class="btn btn-primary dropdown-toggle">
+                    <option name=ShutdownInstanceChaosType value="ShutdownInstanceChaosType">Shutdown Instance</option>
+            </select>
+            <br /><br />
+            <input type="button" class ="btn btn-primary" value="Submit" onclick="submitChaos()"></input>
+        </div>
+    </div>
+</div>
+<br /><br />
+<h4>Past Events</h4>
+<hr />
+<div id="result"></div>
+<script type="text/javascript">
+    jQuery(document).ready(function ($) {
+        $('#tabs').tab();
+    });
+    
+</script>    
+</div> 
+</body>
+</html>
